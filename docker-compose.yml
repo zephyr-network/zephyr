@@ -2,7 +2,7 @@ version: "3"
 services:
   horovod-master:
     build: horovod-docker
-    command: mpirun -np 2 -H horovod-worker1:1,horovod-worker2:1,horovod-worker3:1,horovod-worker4:1,horovod-worker5:1,horovod-worker6:1 -mca plm_rsh_args "-p 12345" python keras_imagenet_resnet50.py
+    command: mpirun -np 6 -H horovod-worker1:1,horovod-worker2:1,horovod-worker3:1,horovod-worker4:1,horovod-worker5:1,horovod-worker6:1 -mca plm_rsh_args "-p 12345" python keras_imagenet_resnet50.py
     volumes:
       - ./share/ssh:/root/.ssh
 
