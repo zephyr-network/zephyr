@@ -1,0 +1,19 @@
+version: "3"
+services:
+  horovod-master:
+    build: horovod-docker
+    command: mpirun -np 2 -H horovod-worker1:1,horovod-worker2:1 -mca plm_rsh_args "-p 12345" python keras_mnist_advanced.py
+    volumes:
+      - ./share/ssh:/root/.ssh
+
+  horovod-worker1:
+    build: horovod-docker
+    command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
+    volumes:
+      - ./share/ssh:/root/.ssh
+
+  horovod-worker2:
+    build: horovod-docker
+    command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
+    volumes:
+    - ./share/ssh:/root/.ssh
