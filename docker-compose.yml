@@ -16,4 +16,4 @@ services:
     build: horovod-docker
     command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
     volumes:
-    - ./share/ssh:/root/.ssh
+      - ./share/ssh:/root/.ssh
