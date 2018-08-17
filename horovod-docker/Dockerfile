@@ -93,4 +93,8 @@ RUN apt-get install -y --no-install-recommends subversion && \
     svn checkout https://github.com/uber/horovod/trunk/examples && \
     rm -rf /examples/.svn
 
+RUN mkdir -p /root/imagenet && \
+    mkdir -p /root/imagenet/train && \
+    mkdir -p /root/imagenet/validation
+
 WORKDIR "/examples"
