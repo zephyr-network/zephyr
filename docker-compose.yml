@@ -24,3 +24,8 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ./share/ssh:/root/.ssh
+
+networks:
+  default:
+    external:
+      name: ml   

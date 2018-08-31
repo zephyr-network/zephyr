@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+  ml1:
+    build: horovod-docker
+    command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./share/ssh:/root/.ssh
+
+networks:
+  default:
+    external:
+      name: ml   
