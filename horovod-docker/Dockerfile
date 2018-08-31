@@ -1,16 +1,4 @@
-FROM nvidia/cuda:9.0-devel-ubuntu16.04
-
-# TensorFlow version is tightly coupled to CUDA and cuDNN so it should be selected carefully
-ENV TENSORFLOW_VERSION=1.10.0
-ENV PYTORCH_VERSION=0.4.0
-ENV CUDNN_VERSION=7.0.5.15-1+cuda9.0
-ENV NCCL_VERSION=2.2.13-1+cuda9.0
-
-# Python 2.7 or 3.5 is supported by Ubuntu Xenial out of the box
-ARG python=2.7
-ENV PYTHON_VERSION=${python}
-
-RUN echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+FROM ubuntu:16.04
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
@@ -20,31 +8,89 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         vim \
         wget \
         ca-certificates \
-        libcudnn7=${CUDNN_VERSION} \
-        libnccl2=${NCCL_VERSION} \
-        libnccl-dev=${NCCL_VERSION} \
         libjpeg-dev \
-        libpng-dev \
-        python${PYTHON_VERSION} \
-        python${PYTHON_VERSION}-dev
-
-RUN ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python
-
-RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
-    python get-pip.py && \
-    rm get-pip.py
+        libpng-dev 
 
 # Install TensorFlow and Keras
-RUN pip install tensorflow-gpu==${TENSORFLOW_VERSION} keras h5py
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl && \
+  curl -sL http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | apt-key add - && \
+  sh -c 'echo deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main > /etc/apt/sources.list.d/rocm.list' && \
+  apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  sudo \
+  libelf1 \
+  libnuma-dev \
+  build-essential \
+  git \
+  vim-nox \
+  cmake-curses-gui \
+  rocm-dev && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
-# Install PyTorch
-RUN PY=$(echo ${PYTHON_VERSION} | sed s/\\.//); \
-    if echo ${PYTHON_VERSION} | grep ^3 >/dev/null; then \
-        pip install http://download.pytorch.org/whl/cu90/torch-${PYTORCH_VERSION}-cp${PY}-cp${PY}m-linux_x86_64.whl; \
-    else \
-        pip install http://download.pytorch.org/whl/cu90/torch-${PYTORCH_VERSION}-cp${PY}-cp${PY}mu-linux_x86_64.whl; \
-    fi; \
-    pip install torchvision
+ENV PATH "${PATH}:/opt/rocm/bin"
+
+ENV ROCM_PATH /opt/rocm
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt install -y wget software-properties-common && \
+    apt-get update && apt-get install -y \
+  build-essential \
+  clang-3.8 \
+  clang-format-3.8 \
+  clang-tidy-3.8 \
+  cmake \
+  cmake-qt-gui \
+  ssh \
+  curl \
+  apt-utils \
+  pkg-config \
+  g++-multilib \
+  git \
+  libunwind-dev \
+  libfftw3-dev \
+  libelf-dev \
+  libncurses5-dev \
+  libpthread-stubs0-dev \
+  vim \
+  gfortran \
+  libboost-program-options-dev \
+  libssl-dev \
+  libboost-dev \
+  libboost-system-dev \
+  libboost-filesystem-dev \
+  rpm \
+  wget && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  apt-get update && \
+  apt-get install -y --allow-unauthenticated \
+  rocm-dev rocm-libs \
+  rocm-device-libs \
+  hsa-ext-rocr-dev hsakmt-roct-dev hsa-rocr-dev \
+  rocm-opencl rocm-opencl-dev \
+  rocm-utils \
+  rocm-profiler cxlactivitylogger \
+  miopen-hip miopengemm && \
+  apt-get update && apt-get install -y \
+    python3-numpy \
+    python3-dev \
+    python3-wheel \
+    python3-mock \
+    python3-future \
+    python3-pip \
+    python3-yaml \
+    python3-setuptools && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN cd ~/ && wget http://repo.radeon.com/rocm/misc/tensorflow/tensorflow-1.8.0-cp35-cp35m-manylinux1_x86_64.whl && \
+    pip3 install tensorflow-1.8.0-cp35-cp35m-manylinux1_x86_64.whl && rm tensorflow-1.8.0-cp35-cp35m-manylinux1_x86_64.whl
+
+RUN pip3 install keras h5py
+
+RUN ln -s /usr/bin/pip3 /usr/bin/pip && \
+    apt-get update && apt-get -y install cargo && \
+    cargo install sccache
 
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
@@ -58,10 +104,7 @@ RUN mkdir /tmp/openmpi && \
     ldconfig && \
     rm -rf /tmp/openmpi
 
-# Install Horovod, temporarily using CUDA stubs
-RUN ldconfig /usr/local/cuda-9.0/targets/x86_64-linux/lib/stubs && \
-    HOROVOD_GPU_ALLREDUCE=NCCL HOROVOD_WITH_TENSORFLOW=1 HOROVOD_WITH_PYTORCH=1 pip install --no-cache-dir horovod && \
-    ldconfig
+RUN HOROVOD_WITH_TENSORFLOW=1 pip3 install --no-cache-dir git+https://github.com/ROCmSoftwarePlatform/horovod.git
 
 # Create a wrapper for OpenMPI to allow running as root by default
 RUN mv /usr/local/bin/mpirun /usr/local/bin/mpirun.real && \
@@ -74,10 +117,6 @@ RUN mv /usr/local/bin/mpirun /usr/local/bin/mpirun.real && \
 RUN echo "hwloc_base_binding_policy = none" >> /usr/local/etc/openmpi-mca-params.conf && \
     echo "rmaps_base_mapping_policy = slot" >> /usr/local/etc/openmpi-mca-params.conf && \
     echo "btl_tcp_if_exclude = lo,docker0" >> /usr/local/etc/openmpi-mca-params.conf
-
-# Set default NCCL parameters
-RUN echo NCCL_DEBUG=INFO >> /etc/nccl.conf && \
-    echo NCCL_SOCKET_IFNAME=^docker0 >> /etc/nccl.conf
 
 # Install OpenSSH for MPI to communicate between containers
 RUN apt-get install -y --no-install-recommends openssh-client openssh-server && \

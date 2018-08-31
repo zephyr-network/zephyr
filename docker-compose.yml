@@ -1,8 +1,8 @@
-version: "3"
+version: "3.7"
 services:
   horovod-master:
     build: horovod-docker
-    command: mpirun -np 6 -H horovod-worker1:1,horovod-worker2:1,horovod-worker3:1,horovod-worker4:1,horovod-worker5:1,horovod-worker6:1 -mca plm_rsh_args "-p 12345" python keras_mnist_advanced.py
+    command: mpirun -np 2 -H horovod-worker1:2 -mca plm_rsh_args "-p 12345" python3 keras_mnist_advanced.py
     volumes:
       - ./share/ssh:/root/.ssh
       - ./imagenet:/root/imagenet
@@ -10,35 +10,17 @@ services:
   horovod-worker1:
     build: horovod-docker
     command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
     volumes:
       - ./share/ssh:/root/.ssh
 
   horovod-worker2:
     build: horovod-docker
     command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
     volumes:
       - ./share/ssh:/root/.ssh
-
-  horovod-worker3:
-    build: horovod-docker
-    command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
-    volumes:
-    - ./share/ssh:/root/.ssh
-
-  horovod-worker4:
-    build: horovod-docker
-    command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
-    volumes:
-    - ./share/ssh:/root/.ssh
-
-  horovod-worker5:
-    build: horovod-docker
-    command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
-    volumes:
-    - ./share/ssh:/root/.ssh
-
-  horovod-worker6:
-    build: horovod-docker
-    command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
-    volumes:
-    - ./share/ssh:/root/.ssh
