@@ -2,12 +2,14 @@ version: "3.7"
 services:
   horovod-master:
     build: horovod-docker
-    command: mpirun -np 2 -H horovod-worker1:2 -mca plm_rsh_args "-p 12345" python3 keras_mnist_advanced.py
+# debug #    command: mpirun -v -np 2 -H worker1:1,worker2:1 -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH -x PATH -x NCCL_SOCKET_IFNAME=^docker0 -mca btl_tcp_if_exclude lo,docker0 -bind-to none -map-by slot -mca pml ob1 -mca btl ^openib -mca btl_base_verbose 20 -mca oob_base_verbose 10 -mca plm_rsh_args "-vvvv -p 12345" python3 keras_mnist_advanced.py
+    command: mpirun -v -np 2 -H worker1:1,worker2:1 -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH -x PATH -x NCCL_SOCKET_IFNAME=^docker0 -mca btl_tcp_if_exclude lo,docker0 -bind-to none -map-by slot -mca pml ob1 -mca btl ^openib -mca plm_rsh_args "-p 12345" python3 keras_mnist_advanced.py'
+# enable it if you need access to external workers #   network_mode: host
     volumes:
       - ./share/ssh:/root/.ssh
       - ./imagenet:/root/imagenet
 
-  horovod-worker1:
+  worker1:
     build: horovod-docker
     command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
     devices:
@@ -16,7 +18,7 @@ services:
     volumes:
       - ./share/ssh:/root/.ssh
 
-  horovod-worker2:
+  worker2:
     build: horovod-docker
     command: bash -c "/usr/sbin/sshd -p 12345; sleep infinity"
     devices:
