@@ -88,10 +88,6 @@ RUN cd ~/ && wget http://repo.radeon.com/rocm/misc/tensorflow/tensorflow-1.8.0-c
 
 RUN pip3 install keras h5py
 
-RUN ln -s /usr/bin/pip3 /usr/bin/pip && \
-    apt-get update && apt-get -y install cargo && \
-    cargo install sccache
-
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
     cd /tmp/openmpi && \
@@ -128,7 +124,7 @@ RUN cat /etc/ssh/ssh_config | grep -v StrictHostKeyChecking > /etc/ssh/ssh_confi
     mv /etc/ssh/ssh_config.new /etc/ssh/ssh_config
 
 # Download examples
-RUN apt-get install -y --no-install-recommends subversion && \
+RUN apt-get update && apt-get install -y --no-install-recommends subversion && \
     svn checkout https://github.com/uber/horovod/trunk/examples && \
     rm -rf /examples/.svn
 
