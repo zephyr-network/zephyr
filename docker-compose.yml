@@ -25,7 +25,3 @@ services:
     volumes:
       - ./share/ssh:/root/.ssh
 
-networks:
-  default:
-    external:
-      name: ml   
