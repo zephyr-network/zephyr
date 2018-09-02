@@ -35,9 +35,9 @@ RUN pip install tensorflow-gpu==${TENSORFLOW_VERSION} keras h5py
 # Install PyTorch
 RUN PY=$(echo ${PYTHON_VERSION} | sed s/\\.//); \
     if echo ${PYTHON_VERSION} | grep ^3 >/dev/null; then \
-        pip install http://download.pytorch.org/whl/cu90/torch-${PYTORCH_VERSION}-cp${PY}-cp${PY}m-linux_x86_64.whl; \
+        pip install http://download.pytorch.org/whl/cu92/torch-${PYTORCH_VERSION}-cp${PY}-cp${PY}m-linux_x86_64.whl; \
     else \
-        pip install http://download.pytorch.org/whl/cu90/torch-${PYTORCH_VERSION}-cp${PY}-cp${PY}mu-linux_x86_64.whl; \
+        pip install http://download.pytorch.org/whl/cu92/torch-${PYTORCH_VERSION}-cp${PY}-cp${PY}mu-linux_x86_64.whl; \
     fi; \
     pip install torchvision
 
@@ -54,7 +54,7 @@ RUN mkdir /tmp/openmpi && \
     rm -rf /tmp/openmpi
 
 # Install Horovod, temporarily using CUDA stubs
-RUN ldconfig /usr/local/cuda-9.0/targets/x86_64-linux/lib/stubs && \
+RUN ldconfig /usr/local/cuda-9.2/targets/x86_64-linux/lib/stubs && \
     HOROVOD_GPU_ALLREDUCE=NCCL HOROVOD_WITH_TENSORFLOW=1 HOROVOD_WITH_PYTORCH=1 pip install --no-cache-dir horovod && \
     ldconfig
 
